@@ -20,8 +20,15 @@ export function RoomTypeCard({ roomType }: RoomTypeCardProps) {
                     </div>
                     <div className="flex items-center text-xl font-bold">
                         <DollarSign className="h-4 w-4 text-muted-foreground" />
-                        {roomType.price}
-                        <span className="text-sm font-normal text-muted-foreground">/night</span>
+                        {roomType.effectivePrice && roomType.effectivePrice !== roomType.price ? (
+                            <div className="flex items-baseline gap-2">
+                                <span className="text-muted-foreground line-through text-sm">${roomType.price}</span>
+                                <span>{roomType.effectivePrice}</span>
+                            </div>
+                        ) : (
+                            <span>{roomType.price}</span>
+                        )}
+                        <span className="text-sm font-normal text-muted-foreground ml-1">/night</span>
                     </div>
                 </div>
             </CardHeader>

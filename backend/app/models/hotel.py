@@ -29,3 +29,29 @@ class RoomType(Base):
     hotel: Mapped["Hotel"] = relationship(back_populates="room_types")
     
     rate_adjustments: Mapped[List["RateAdjustment"]] = relationship(back_populates="room_type", cascade="all, delete-orphan")
+
+    @property
+    def effective_price(self) -> float:
+        from datetime import date
+        today = date.today()
+        
+        try:
+            # Check if rate_adjustments is loaded to avoid LazyLoad error in async
+            adjustments = self.rate_adjustments
+        except Exception:
+            return self.base_price
+
+        # Sort adjustments by effective_date descending
+        # We process in Python because the list is expected to be small per room type
+        relevant_adjustments = [
+            adj for adj in adjustments 
+            if adj.effective_date <= today
+        ]
+        
+        if not relevant_adjustments:
+            return self.base_price
+            
+        # Get the latest one (closest to today but in the past/today)
+        latest_adjustment = max(relevant_adjustments, key=lambda x: x.effective_date)
+        
+        return self.base_price + latest_adjustment.adjustment_amount

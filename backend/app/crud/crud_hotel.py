@@ -51,14 +51,24 @@ async def delete_hotel(db: AsyncSession, hotel_id: int) -> bool:
 
 async def create_room_type(db: AsyncSession, room_type: RoomTypeCreate, hotel_id: int) -> RoomType:
     db_room_type = RoomType(
-        **room_type.dict(),
+        **room_type.model_dump(),
         hotel_id=hotel_id
     )
     db.add(db_room_type)
     await db.commit()
-    await db.refresh(db_room_type)
-    return db_room_type
+    
+    # Re-fetch with eager loading to allow serialization of properties
+    result = await db.execute(
+        select(RoomType)
+        .where(RoomType.id == db_room_type.id)
+        .options(selectinload(RoomType.rate_adjustments))
+    )
+    return result.scalars().one()
 
 async def get_room_types(db: AsyncSession, hotel_id: int) -> List[RoomType]:
-    result = await db.execute(select(RoomType).filter(RoomType.hotel_id == hotel_id))
+    result = await db.execute(
+        select(RoomType)
+        .filter(RoomType.hotel_id == hotel_id)
+        .options(selectinload(RoomType.rate_adjustments))
+    )
     return result.scalars().all()

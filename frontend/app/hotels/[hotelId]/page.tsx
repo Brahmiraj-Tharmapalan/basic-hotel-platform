@@ -3,7 +3,7 @@
 import { notFound } from "next/navigation"
 import Image from "next/image"
 
-import { getHotel } from "@/lib/api/hotels"
+import { getHotel, getRoomTypes } from "@/lib/api/hotels"
 import { HotelHeader } from "@/components/hotels/hotel-header"
 import { RoomTypesList } from "@/components/hotels/room-types-list"
 import { Separator } from "@/components/ui/separator"
@@ -17,7 +17,10 @@ interface HotelPageProps {
 export default async function HotelPage({ params }: HotelPageProps) {
     const { hotelId } = await params
 
-    const hotel = await getHotel(hotelId)
+    const [hotel, roomTypes] = await Promise.all([
+        getHotel(hotelId),
+        getRoomTypes(hotelId)
+    ])
 
     if (!hotel) {
         notFound()
@@ -48,7 +51,7 @@ export default async function HotelPage({ params }: HotelPageProps) {
 
             <div className="space-y-4">
                 <h2 className="text-2xl font-bold tracking-tight">Room Types</h2>
-                <RoomTypesList hotelId={hotel.id} roomTypes={hotel.roomTypes || []} />
+                <RoomTypesList hotelId={hotel.id} roomTypes={roomTypes} />
             </div>
         </div>
     )

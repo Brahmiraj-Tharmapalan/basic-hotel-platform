@@ -14,6 +14,7 @@ export const roomTypeSchema = z.object({
         message: "Capacity must be at least 1 person.",
     }),
     amenities: z.array(z.string()).default([]).optional(),
+    effectivePrice: z.number().optional(), // Computed by backend
 })
 
 export type RoomType = z.infer<typeof roomTypeSchema>

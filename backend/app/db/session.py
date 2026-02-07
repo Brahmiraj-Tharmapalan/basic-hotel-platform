@@ -1,19 +1,15 @@
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
-from app.core.config import settings
 from typing import AsyncGenerator
-
+from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
 from sqlalchemy.engine.url import make_url
 
-url = make_url(str(settings.DATABASE_URL))
-if "sslmode" in url.query:
-    # Create a new query dictionary excluding sslmode
-    new_query = {k: v for k, v in url.query.items() if k != "sslmode"}
-    url = url._replace(query=new_query)
+from app.core.config import settings
 
+url = make_url(str(settings.DATABASE_URL))
+
+# create_async_engine with psycopg handle ssl differently
 engine = create_async_engine(
     url,
     echo=True,
-    connect_args={"ssl": "require"}, 
 )
 
 AsyncSessionLocal = async_sessionmaker(

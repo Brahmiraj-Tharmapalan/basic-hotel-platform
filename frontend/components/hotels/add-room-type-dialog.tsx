@@ -95,7 +95,7 @@ export function AddRoomTypeDialog({ hotelId }: AddRoomTypeDialogProps) {
                     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
                         {statusMessage && (
                             <div className={`p-2 rounded text-sm ${statusMessage.type === 'success' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                                {statusMessage.text}
+                                {String(statusMessage.text)}
                             </div>
                         )}
                         <FormField

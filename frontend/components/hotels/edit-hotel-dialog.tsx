@@ -3,7 +3,6 @@
 import { useState } from "react"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
-import { Plus } from "lucide-react"
 import { z } from "zod"
 
 import { Button } from "@/components/ui/button"
@@ -14,7 +13,6 @@ import {
     DialogFooter,
     DialogHeader,
     DialogTitle,
-    DialogTrigger,
 } from "@/components/ui/dialog"
 import {
     Form,
@@ -25,24 +23,34 @@ import {
     FormMessage,
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
-import { hotelSchema } from "./schema"
+import { hotelSchema, Hotel } from "./schema"
 
-import { createHotel } from "@/lib/api/hotels"
+import { updateHotel } from "@/lib/api/hotels"
 
-// Omit ID for creation and make it a pure form schema
+// Omit ID for creation/update and make it a pure form schema
 const formSchema = hotelSchema.omit({ id: true })
 
-export function AddHotelDialog() {
-    const [open, setOpen] = useState(false)
+interface EditHotelDialogProps {
+    hotel: Hotel
+    open?: boolean
+    onOpenChange?: (open: boolean) => void
+}
+
+export function EditHotelDialog({ hotel, open: controlledOpen, onOpenChange }: EditHotelDialogProps) {
+    const [internalOpen, setInternalOpen] = useState(false)
     const [isLoading, setIsLoading] = useState(false)
+
+    const isControlled = typeof controlledOpen !== 'undefined'
+    const open = isControlled ? controlledOpen : internalOpen
+    const setOpen = isControlled ? onOpenChange! : setInternalOpen
 
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
         defaultValues: {
-            name: "",
-            location: "",
-            rating: 5,
-            imageUrl: "",
+            name: hotel.name,
+            location: hotel.location,
+            rating: hotel.rating,
+            imageUrl: hotel.imageUrl || "",
         },
     })
 
@@ -57,19 +65,17 @@ export function AddHotelDialog() {
                 formData.append("imageUrl", values.imageUrl)
             }
 
-            const result = await createHotel(null, formData)
+            const result = await updateHotel(hotel.id.toString(), null, formData)
 
-            if (result?.message === "Hotel created successfully") {
+            if (result?.message === "Hotel updated successfully") {
                 setOpen(false)
-                form.reset()
-                // form.setValue etc if needed but reset handles it
+                // toast.success("Hotel updated successfully")
             } else {
                 console.error(result?.message)
-                // Show error
-                alert(result?.message || "Failed to create hotel")
+                alert(result?.message || "Failed to update hotel")
             }
         } catch (error) {
-            console.error("Failed to create hotel", error)
+            console.error("Failed to update hotel", error)
             alert("An unexpected error occurred")
         } finally {
             setIsLoading(false)
@@ -78,17 +84,11 @@ export function AddHotelDialog() {
 
     return (
         <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger asChild>
-                <Button>
-                    <Plus className="mr-2 h-4 w-4" />
-                    Add Hotel
-                </Button>
-            </DialogTrigger>
             <DialogContent className="sm:max-w-[425px]">
                 <DialogHeader>
-                    <DialogTitle>Add Hotel</DialogTitle>
+                    <DialogTitle>Edit Hotel</DialogTitle>
                     <DialogDescription>
-                        Add a new hotel to the platform. Click save when you&apos;re done.
+                        Edit hotel details. Click save when you&apos;re done.
                     </DialogDescription>
                 </DialogHeader>
                 <Form {...form}>

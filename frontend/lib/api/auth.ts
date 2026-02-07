@@ -15,7 +15,7 @@ export async function login(email: string, password: string): Promise<LoginRespo
     formData.append("username", email)
     formData.append("password", password)
 
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"}/api/v1/login/access-token`, {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000"}/api/v1/login/access-token`, {
         method: "POST",
         headers: {
             "Content-Type": "application/x-www-form-urlencoded",

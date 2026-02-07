@@ -13,7 +13,7 @@ export default async function HotelsPage() {
                     <AddHotelDialog />
                 </div>
             </div>
-            <div className="hidden h-full flex-1 flex-col space-y-8 md:flex">
+            <div className="flex h-full flex-1 flex-col space-y-8">
                 <HotelClient data={hotels} />
             </div>
         </div>

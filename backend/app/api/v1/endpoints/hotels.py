@@ -76,3 +76,16 @@ async def create_room_type(
     if not db_hotel:
         raise HTTPException(status_code=404, detail="Hotel not found")
     return await crud_hotel.create_room_type(db=db, room_type=room_type, hotel_id=hotel_id)
+@router.get("/{hotel_id}/rooms", response_model=List[schemas.RoomType], response_model_by_alias=True)
+async def read_room_types(
+    hotel_id: int,
+    skip: int = 0,
+    limit: int = 100,
+    db: AsyncSession = Depends(deps.get_db),
+):
+    """Public endpoint - no authentication required"""
+    hotel = await crud_hotel.get_hotel(db, hotel_id=hotel_id)
+    if not hotel:
+        raise HTTPException(status_code=404, detail="Hotel not found")
+    # Assuming crud_hotel.get_room_types exists and filters by hotel_id
+    return await crud_hotel.get_room_types(db, hotel_id=hotel_id)

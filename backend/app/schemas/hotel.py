@@ -24,6 +24,7 @@ class RoomTypeUpdate(RoomTypeBase):
 class RoomType(RoomTypeBase):
     id: int
     hotel_id: int = Field(..., alias="hotelId")
+    effective_price: float = Field(..., alias="effectivePrice")
 
     class Config:
         from_attributes = True
