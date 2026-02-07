@@ -70,3 +70,6 @@ Desktop.ini
 
 # Logs
 *.log
+
+# Audit results
+backend/audit_results.txt

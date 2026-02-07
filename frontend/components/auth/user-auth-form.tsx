@@ -46,7 +46,7 @@ export function UserAuthForm({ className, ...props }: UserAuthFormProps) {
 
         try {
             await login(data.email, data.password)
-            router.push("/")
+            router.push("/hotels")
         } catch (err) {
             if (err instanceof Error) {
                 setError(err.message)
