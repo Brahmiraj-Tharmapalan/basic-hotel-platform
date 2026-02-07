@@ -5,6 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { Plus } from "lucide-react"
 import { z } from "zod"
+import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -60,17 +61,22 @@ export function AddHotelDialog() {
             const result = await createHotel(null, formData)
 
             if (result?.message === "Hotel created successfully") {
+                toast.success("Hotel created successfully!", {
+                    description: `${values.name} has been added to the platform`
+                })
                 setOpen(false)
                 form.reset()
-                // form.setValue etc if needed but reset handles it
             } else {
                 console.error(result?.message)
-                // Show error
-                alert(result?.message || "Failed to create hotel")
+                toast.error("Failed to create hotel", {
+                    description: result?.message || "Please try again"
+                })
             }
         } catch (error) {
             console.error("Failed to create hotel", error)
-            alert("An unexpected error occurred")
+            toast.error("An unexpected error occurred", {
+                description: "Please try again later"
+            })
         } finally {
             setIsLoading(false)
         }
@@ -126,15 +132,15 @@ export function AddHotelDialog() {
                                 <FormItem>
                                     <FormLabel>Image URL</FormLabel>
                                     <FormControl>
-                                        <Input placeholder="https://..." {...field} />
+                                        <Input placeholder="https://..." disabled={isLoading} {...field} />
                                     </FormControl>
                                     <FormMessage />
                                 </FormItem>
                             )}
                         />
                         <DialogFooter>
-                            <Button type="submit" disabled={isLoading}>
-                                {isLoading ? "Saving..." : "Save changes"}
+                            <Button type="submit" isLoading={isLoading}>
+                                Save changes
                             </Button>
                         </DialogFooter>
                     </form>

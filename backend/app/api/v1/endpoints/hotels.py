@@ -76,6 +76,7 @@ async def create_room_type(
     if not db_hotel:
         raise HTTPException(status_code=404, detail="Hotel not found")
     return await crud_hotel.create_room_type(db=db, room_type=room_type, hotel_id=hotel_id)
+
 @router.get("/{hotel_id}/rooms", response_model=List[schemas.RoomType], response_model_by_alias=True)
 async def read_room_types(
     hotel_id: int,
@@ -87,5 +88,56 @@ async def read_room_types(
     hotel = await crud_hotel.get_hotel(db, hotel_id=hotel_id)
     if not hotel:
         raise HTTPException(status_code=404, detail="Hotel not found")
-    # Assuming crud_hotel.get_room_types exists and filters by hotel_id
     return await crud_hotel.get_room_types(db, hotel_id=hotel_id)
+
+@router.put("/{hotel_id}/rooms/{room_id}", response_model=schemas.RoomType, response_model_by_alias=True)
+async def update_room_type(
+    hotel_id: int,
+    room_id: int,
+    room_type: schemas.RoomTypeUpdate,
+    current_user: CurrentUser,
+    db: AsyncSession = Depends(deps.get_db),
+):
+    """Protected endpoint - requires authentication"""
+    # Verify hotel exists
+    hotel = await crud_hotel.get_hotel(db, hotel_id=hotel_id)
+    if not hotel:
+        raise HTTPException(status_code=404, detail="Hotel not found")
+    
+    # Get room type to verify it belongs to hotel
+    db_room_type = await crud_hotel.get_room_type(db, room_id=room_id)
+    if not db_room_type:
+        raise HTTPException(status_code=404, detail="Room type not found")
+    
+    if db_room_type.hotel_id != hotel_id:
+        raise HTTPException(status_code=400, detail="Room type does not belong to this hotel")
+    
+    # Update room type
+    updated_room = await crud_hotel.update_room_type(db, room_id=room_id, room_type=room_type)
+    return updated_room
+
+@router.delete("/{hotel_id}/rooms/{room_id}", response_model=schemas.RoomType, response_model_by_alias=True)
+async def delete_room_type(
+    hotel_id: int,
+    room_id: int,
+    current_user: CurrentUser,
+    db: AsyncSession = Depends(deps.get_db),
+):
+    """Protected endpoint - requires authentication"""
+    # Verify hotel exists
+    hotel = await crud_hotel.get_hotel(db, hotel_id=hotel_id)
+    if not hotel:
+        raise HTTPException(status_code=404, detail="Hotel not found")
+    
+    # Get room type before deletion
+    db_room_type = await crud_hotel.get_room_type(db, room_id=room_id)
+    if not db_room_type:
+        raise HTTPException(status_code=404, detail="Room type not found")
+    
+    # Verify room belongs to hotel
+    if db_room_type.hotel_id != hotel_id:
+        raise HTTPException(status_code=400, detail="Room type does not belong to this hotel")
+    
+    # Delete room type
+    await crud_hotel.delete_room_type(db, room_id=room_id)
+    return db_room_type

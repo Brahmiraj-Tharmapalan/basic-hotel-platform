@@ -1,8 +1,18 @@
 "use server"
 
 import { revalidatePath } from "next/cache"
+import { cookies } from "next/headers"
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000/api/v1"
+
+async function getAuthHeaders() {
+    const cookieStore = await cookies()
+    const token = cookieStore.get("access_token")?.value || ""
+    return {
+        "Content-Type": "application/json",
+        "Cookie": `access_token=${token}`,
+    }
+}
 
 export type RateAdjustment = {
     id: number
@@ -35,12 +45,10 @@ export async function createRateAdjustment(
     }
 
     try {
+        const headers = await getAuthHeaders()
         const res = await fetch(`${API_URL}/rates/`, {
             method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                // "Authorization": ... // Auth is handled implicitly via cookies/middleware if set up, or we might need to pass token
-            },
+            headers: headers,
             body: JSON.stringify(rawData),
         })
 
@@ -50,7 +58,7 @@ export async function createRateAdjustment(
             if (res.status === 422) {
                 return {
                     message: "Validation failed",
-                    errors: errorData.detail.reduce((acc: any, err: any) => {
+                    errors: errorData.detail.reduce((acc: Record<string, string[]>, err: { loc: string[], msg: string }) => {
                         acc[err.loc[1]] = [err.msg]
                         return acc
                     }, {})
@@ -74,18 +82,26 @@ export async function createRateAdjustment(
 
 export async function getRateAdjustments(): Promise<RateAdjustment[]> {
     try {
+        const headers = await getAuthHeaders()
+        console.log('🔍 Fetching rate adjustments from:', `${API_URL}/rates/`)
         const res = await fetch(`${API_URL}/rates/`, {
             cache: "no-store",
+            headers: headers,
         })
 
+        console.log('📡 Response status:', res.status)
+
         if (!res.ok) {
-            console.error("Failed to fetch rate adjustments:", await res.text())
+            const errorText = await res.text()
+            console.error("❌ Failed to fetch rate adjustments:", errorText)
             return []
         }
 
-        return await res.json()
+        const data = await res.json()
+        console.log('✅ Rate adjustments fetched:', data.length, 'items')
+        return data
     } catch (error) {
-        console.error("Error fetching rate adjustments:", error)
+        console.error("💥 Error fetching rate adjustments:", error)
         return []
     }
 }

@@ -23,8 +23,6 @@ export async function getHotels(): Promise<Hotel[]> {
 
         if (!res.ok) {
             console.error("Failed to fetch hotels:", await res.text())
-            // Return empty array or throw, depending on UI strategy. 
-            // For now, returning empty allows page to render with "No hotels"
             return []
         }
 
@@ -81,9 +79,9 @@ export async function createRoomType(
     const rawData = {
         name: formData.get("name"),
         description: formData.get("description"),
-        basePrice: Number(formData.get("price")), // Backend expects basePrice
+        basePrice: Number(formData.get("basePrice")), // Fixed: changed from 'price' to 'basePrice'
         capacity: Number(formData.get("capacity")),
-        amenities: formData.get("amenities") || "", // Backend expects string
+        amenities: formData.get("amenities") || "",
     }
 
     try {
@@ -96,7 +94,6 @@ export async function createRoomType(
 
         if (!res.ok) {
             const errorData = await res.json()
-            // Backend might return structured error (array of objects) or a simple string
             let errorMessage = "Failed to create room type"
             if (typeof errorData.detail === "string") {
                 errorMessage = errorData.detail
@@ -130,7 +127,6 @@ export async function getRoomTypes(hotelId: string): Promise<RoomType[]> {
 
         if (!res.ok) {
             console.error(`Failed to fetch room types for hotel ${hotelId}:`, await res.text())
-            // return [] // Or throw
             return []
         }
 
@@ -194,7 +190,6 @@ export async function createHotel(
         }
     }
 }
-// ... existing code ...
 
 export type UpdateHotelState = CreateHotelState
 
@@ -263,6 +258,81 @@ export async function deleteHotel(hotelId: string): Promise<{ message: string; e
         return { message: "Hotel deleted successfully" }
     } catch (error) {
         console.error("Error deleting hotel:", error)
+        return {
+            message: "Failed to connect to server",
+            error: "Network error"
+        }
+    }
+}
+
+export type UpdateRoomTypeState = CreateRoomTypeState
+
+export async function updateRoomType(
+    hotelId: string,
+    roomId: string,
+    prevState: UpdateRoomTypeState,
+    formData: FormData
+): Promise<UpdateRoomTypeState> {
+    const rawData = {
+        name: formData.get("name"),
+        description: formData.get("description"),
+        basePrice: Number(formData.get("basePrice")),
+        capacity: Number(formData.get("capacity")),
+        amenities: formData.get("amenities") || "",
+    }
+
+    try {
+        const headers = await getAuthHeaders()
+        const res = await fetch(`${API_URL}/hotels/${hotelId}/rooms/${roomId}`, {
+            method: "PUT",
+            headers: headers,
+            body: JSON.stringify(rawData),
+        })
+
+        if (!res.ok) {
+            const errorData = await res.json()
+            let errorMessage = "Failed to update room type"
+            if (typeof errorData.detail === "string") {
+                errorMessage = errorData.detail
+            } else if (Array.isArray(errorData.detail)) {
+                errorMessage = errorData.detail.map((err: { msg: string }) => err.msg).join(", ")
+            }
+
+            return {
+                message: errorMessage,
+            }
+        }
+
+        revalidatePath(`/hotels/${hotelId}`)
+        return { message: "Room type updated successfully" }
+    } catch (error) {
+        console.error("Error updating room type:", error)
+        return {
+            message: "Failed to connect to server"
+        }
+    }
+}
+
+export async function deleteRoomType(hotelId: string, roomId: string): Promise<{ message: string; error?: string }> {
+    try {
+        const headers = await getAuthHeaders()
+        const res = await fetch(`${API_URL}/hotels/${hotelId}/rooms/${roomId}`, {
+            method: "DELETE",
+            headers: headers,
+        })
+
+        if (!res.ok) {
+            const errorData = await res.json()
+            return {
+                message: "Failed to delete room type",
+                error: errorData.detail
+            }
+        }
+
+        revalidatePath(`/hotels/${hotelId}`)
+        return { message: "Room type deleted successfully" }
+    } catch (error) {
+        console.error("Error deleting room type:", error)
         return {
             message: "Failed to connect to server",
             error: "Network error"

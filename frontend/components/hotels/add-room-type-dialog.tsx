@@ -5,6 +5,7 @@ import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Plus } from "lucide-react"
 import { z } from "zod"
+import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -29,8 +30,12 @@ import { Textarea } from "@/components/ui/textarea"
 import { roomTypeSchema } from "./schema"
 import { createRoomType } from "@/lib/api/hotels"
 
-// Omit ID since it's generated on the backend (or mock)
-const formSchema = roomTypeSchema.omit({ id: true })
+// Omit internal fields for the create form
+const formSchema = roomTypeSchema.omit({
+    id: true,
+    hotelId: true,
+    effectivePrice: true
+})
 
 interface AddRoomTypeDialogProps {
     hotelId: number
@@ -39,40 +44,38 @@ interface AddRoomTypeDialogProps {
 export function AddRoomTypeDialog({ hotelId }: AddRoomTypeDialogProps) {
     const [open, setOpen] = useState(false)
     const [isPending, startTransition] = useTransition()
-    const [statusMessage, setStatusMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null)
 
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
         defaultValues: {
             name: "",
             description: "",
-            price: 0,
+            basePrice: 0,
             capacity: 2,
             amenities: [],
         },
     })
 
     function onSubmit(values: z.infer<typeof formSchema>) {
-        setStatusMessage(null)
         startTransition(async () => {
             const formData = new FormData()
             formData.append("name", values.name)
             if (values.description) formData.append("description", values.description)
-            formData.append("price", values.price.toString())
+            formData.append("basePrice", values.basePrice.toString())
             formData.append("capacity", values.capacity.toString())
-            // Amenities logic if needed, for now just basic text or empty
 
             const result = await createRoomType(hotelId.toString(), null, formData)
 
             if (result?.message === "Room type created successfully") {
-                setStatusMessage({ type: 'success', text: "Room type added successfully." })
-                setTimeout(() => {
-                    setOpen(false)
-                    setStatusMessage(null)
-                    form.reset()
-                }, 1000)
+                toast.success("Room type added successfully!", {
+                    description: `${values.name} has been added`
+                })
+                setOpen(false)
+                form.reset()
             } else {
-                setStatusMessage({ type: 'error', text: result?.message || "Failed to add room type." })
+                toast.error("Failed to add room type", {
+                    description: result?.message || "Please try again"
+                })
             }
         })
     }
@@ -93,11 +96,6 @@ export function AddRoomTypeDialog({ hotelId }: AddRoomTypeDialogProps) {
                 </DialogHeader>
                 <Form {...form}>
                     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                        {statusMessage && (
-                            <div className={`p-2 rounded text-sm ${statusMessage.type === 'success' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                                {String(statusMessage.text)}
-                            </div>
-                        )}
                         <FormField
                             control={form.control}
                             name="name"
@@ -127,37 +125,42 @@ export function AddRoomTypeDialog({ hotelId }: AddRoomTypeDialogProps) {
                                 </FormItem>
                             )}
                         />
-                        <div className="grid grid-cols-2 gap-4">
-                            <FormField
-                                control={form.control}
-                                name="price"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Price</FormLabel>
-                                        <FormControl>
-                                            <Input type="number" {...field} />
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-                            <FormField
-                                control={form.control}
-                                name="capacity"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Capacity</FormLabel>
-                                        <FormControl>
-                                            <Input type="number" {...field} />
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
+                        <div className="space-y-4">
+                            <div className="grid grid-cols-2 gap-4">
+                                <FormField
+                                    control={form.control}
+                                    name="basePrice"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Base Price</FormLabel>
+                                            <FormControl>
+                                                <Input type="number" disabled={isPending} {...field} />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                                <FormField
+                                    control={form.control}
+                                    name="capacity"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Capacity</FormLabel>
+                                            <FormControl>
+                                                <Input type="number" disabled={isPending} {...field} />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                            </div>
+                            <p className="text-xs text-muted-foreground">
+                                Base rate per night. Use Rate Adjustments for dynamic pricing.
+                            </p>
                         </div>
                         <DialogFooter>
-                            <Button type="submit" disabled={isPending}>
-                                {isPending ? "Saving..." : "Save changes"}
+                            <Button type="submit" isLoading={isPending}>
+                                Save changes
                             </Button>
                         </DialogFooter>
                     </form>

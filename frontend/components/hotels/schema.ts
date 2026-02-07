@@ -1,13 +1,13 @@
 import { z } from "zod"
 
-
 export const roomTypeSchema = z.object({
-    id: z.number().optional(), // Optional for creation, present in read
+    id: z.number().optional(), // Present in read, missing in create
+    hotelId: z.number().optional(), // Present in read
     name: z.string().min(2, {
         message: "Name must be at least 2 characters.",
     }),
     description: z.string().optional(),
-    price: z.coerce.number().min(0, {
+    basePrice: z.coerce.number().min(0, {
         message: "Price must be a positive number.",
     }),
     capacity: z.coerce.number().min(1, {

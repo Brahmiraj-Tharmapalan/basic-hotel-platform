@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { toast } from "sonner"
 
 import { MoreHorizontal, Pencil, Trash } from "lucide-react"
 import Link from "next/link"
@@ -43,14 +44,20 @@ export function HotelActions({ hotel }: HotelActionsProps) {
             const result = await deleteHotel(hotel.id.toString())
             if (result.error) {
                 console.error(result.error)
-                alert(result.error || "Failed to delete hotel")
+                toast.error("Failed to delete hotel", {
+                    description: result.error || "Please try again"
+                })
             } else {
-                // toast.success("Hotel deleted successfully")
+                toast.success("Hotel deleted successfully!", {
+                    description: `${hotel.name} has been removed`
+                })
                 setShowDeleteAlertDialog(false)
             }
         } catch (error) {
             console.error("Failed to delete hotel", error)
-            alert("An unexpected error occurred")
+            toast.error("An unexpected error occurred", {
+                description: "Please try again later"
+            })
         } finally {
             setIsDeleting(false)
         }
@@ -74,15 +81,14 @@ export function HotelActions({ hotel }: HotelActionsProps) {
                     </AlertDialogHeader>
                     <AlertDialogFooter>
                         <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction
-                            onClick={(e) => {
-                                e.preventDefault()
-                                handleDelete()
-                            }}
-                            disabled={isDeleting}
-                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                        >
-                            {isDeleting ? "Deleting..." : "Delete"}
+                        <AlertDialogAction asChild>
+                            <Button
+                                variant="destructive"
+                                isLoading={isDeleting}
+                                onClick={handleDelete}
+                            >
+                                Delete
+                            </Button>
                         </AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>

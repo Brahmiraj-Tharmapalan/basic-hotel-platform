@@ -4,7 +4,8 @@ import { useState, useEffect } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
-import { Loader2 } from "lucide-react"
+import { toast } from "sonner"
+import { useRouter } from "next/navigation"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -41,6 +42,7 @@ interface RateAdjustmentFormProps {
 }
 
 export function RateAdjustmentForm({ hotels }: RateAdjustmentFormProps) {
+    const router = useRouter()
     const [roomTypes, setRoomTypes] = useState<RoomType[]>([])
     const [isLoadingRoomTypes, setIsLoadingRoomTypes] = useState(false)
     const [isPending, setIsPending] = useState(false)
@@ -58,6 +60,11 @@ export function RateAdjustmentForm({ hotels }: RateAdjustmentFormProps) {
 
     // Watch hotel_id to fetch room types
     const selectedHotelId = form.watch("hotel_id")
+    const selectedRoomTypeId = form.watch("room_type_id")
+    const adjustmentAmount = form.watch("adjustment_amount")
+
+    // Find selected room type for price display
+    const selectedRoomType = roomTypes.find(rt => rt.id?.toString() === selectedRoomTypeId)
 
     useEffect(() => {
         async function loadRoomTypes() {
@@ -93,7 +100,9 @@ export function RateAdjustmentForm({ hotels }: RateAdjustmentFormProps) {
         try {
             const result = await createRateAdjustmentAction(null, formData)
             if (result?.message && !result.errors) {
-                alert(result.message)
+                toast.success("Rate adjustment created successfully!", {
+                    description: `${values.adjustment_amount > 0 ? '+' : ''}$${values.adjustment_amount} adjustment will be effective from ${values.effective_date}`
+                })
                 form.reset({
                     hotel_id: values.hotel_id, // Keep hotel selected
                     room_type_id: "",
@@ -101,11 +110,17 @@ export function RateAdjustmentForm({ hotels }: RateAdjustmentFormProps) {
                     effective_date: "",
                     reason: ""
                 })
+                // Refresh the page to show the new adjustment in history
+                router.refresh()
             } else {
-                alert(result?.message || "Something went wrong")
+                toast.error("Failed to create adjustment", {
+                    description: result?.message || "Something went wrong"
+                })
             }
-        } catch (error) {
-            alert("Failed to submit")
+        } catch {
+            toast.error("Failed to submit", {
+                description: "Please try again later"
+            })
         } finally {
             setIsPending(false)
         }
@@ -174,6 +189,32 @@ export function RateAdjustmentForm({ hotels }: RateAdjustmentFormProps) {
                             )}
                         />
 
+                        {selectedRoomType && (
+                            <div className="rounded-lg border bg-muted/50 p-4 space-y-2">
+                                <p className="text-sm font-medium">Current Pricing:</p>
+                                <div className="grid grid-cols-2 gap-2 text-sm">
+                                    <div>
+                                        <span className="text-muted-foreground">Base Price:</span>
+                                        <span className="ml-2 font-semibold">${Number(selectedRoomType.price || 0).toFixed(2)}</span>
+                                    </div>
+                                    {selectedRoomType.effectivePrice && selectedRoomType.effectivePrice !== selectedRoomType.price && (
+                                        <div>
+                                            <span className="text-muted-foreground">Current Effective:</span>
+                                            <span className="ml-2 font-semibold">${Number(selectedRoomType.effectivePrice || 0).toFixed(2)}</span>
+                                        </div>
+                                    )}
+                                </div>
+                                {adjustmentAmount !== 0 && (
+                                    <div className="pt-2 border-t">
+                                        <span className="text-sm text-muted-foreground">New Effective Price:</span>
+                                        <span className="ml-2 text-lg font-bold text-primary">
+                                            ${(Number(selectedRoomType.price || 0) + Number(adjustmentAmount || 0)).toFixed(2)}
+                                        </span>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+
                         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                             <FormField
                                 control={form.control}
@@ -218,8 +259,7 @@ export function RateAdjustmentForm({ hotels }: RateAdjustmentFormProps) {
                             )}
                         />
 
-                        <Button type="submit" className="w-full" disabled={isPending}>
-                            {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                        <Button type="submit" className="w-full" isLoading={isPending}>
                             Create Adjustment
                         </Button>
                     </form>

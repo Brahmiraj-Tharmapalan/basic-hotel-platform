@@ -10,7 +10,6 @@ import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Icons } from "@/components/icons"
 import { login } from "@/lib/api/auth"
 
 type UserAuthFormProps = React.HTMLAttributes<HTMLDivElement>
@@ -106,10 +105,7 @@ export function UserAuthForm({ className, ...props }: UserAuthFormProps) {
                             {error}
                         </div>
                     )}
-                    <Button disabled={isLoading}>
-                        {isLoading && (
-                            <Icons.spinner className="mr-2 h-4 w-4 animate-spin" />
-                        )}
+                    <Button isLoading={isLoading}>
                         Sign In with Email
                     </Button>
                 </div>

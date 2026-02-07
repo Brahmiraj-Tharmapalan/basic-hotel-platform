@@ -24,20 +24,20 @@ import {
     FormMessage,
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
-import { hotelSchema, Hotel } from "./schema"
+import { Textarea } from "@/components/ui/textarea"
+import { roomTypeSchema, RoomType } from "./schema"
+import { updateRoomType } from "@/lib/api/hotels"
 
-import { updateHotel } from "@/lib/api/hotels"
+const formSchema = roomTypeSchema.omit({ id: true, effectivePrice: true, hotelId: true })
 
-// Omit ID for creation/update and make it a pure form schema
-const formSchema = hotelSchema.omit({ id: true })
-
-interface EditHotelDialogProps {
-    hotel: Hotel
+interface EditRoomTypeDialogProps {
+    roomType: RoomType
+    hotelId: number
     open?: boolean
     onOpenChange?: (open: boolean) => void
 }
 
-export function EditHotelDialog({ hotel, open: controlledOpen, onOpenChange }: EditHotelDialogProps) {
+export function EditRoomTypeDialog({ roomType, hotelId, open: controlledOpen, onOpenChange }: EditRoomTypeDialogProps) {
     const [internalOpen, setInternalOpen] = useState(false)
     const [isLoading, setIsLoading] = useState(false)
 
@@ -48,10 +48,11 @@ export function EditHotelDialog({ hotel, open: controlledOpen, onOpenChange }: E
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
         defaultValues: {
-            name: hotel.name,
-            location: hotel.location,
-            rating: hotel.rating,
-            imageUrl: hotel.imageUrl || "",
+            name: roomType.name,
+            description: roomType.description || "",
+            basePrice: roomType.basePrice,
+            capacity: roomType.capacity,
+            amenities: roomType.amenities || [],
         },
     })
 
@@ -60,27 +61,25 @@ export function EditHotelDialog({ hotel, open: controlledOpen, onOpenChange }: E
         try {
             const formData = new FormData()
             formData.append("name", values.name)
-            formData.append("location", values.location)
-            formData.append("rating", values.rating.toString())
-            if (values.imageUrl) {
-                formData.append("imageUrl", values.imageUrl)
-            }
+            if (values.description) formData.append("description", values.description)
+            formData.append("basePrice", values.basePrice.toString())
+            formData.append("capacity", values.capacity.toString())
 
-            const result = await updateHotel(hotel.id.toString(), null, formData)
+            const result = await updateRoomType(hotelId.toString(), roomType.id.toString(), null, formData)
 
-            if (result?.message === "Hotel updated successfully") {
-                toast.success("Hotel updated successfully!", {
+            if (result?.message === "Room type updated successfully") {
+                toast.success("Room type updated successfully!", {
                     description: `${values.name} has been updated`
                 })
                 setOpen(false)
             } else {
                 console.error(result?.message)
-                toast.error("Failed to update hotel", {
+                toast.error("Failed to update room type", {
                     description: result?.message || "Please try again"
                 })
             }
         } catch (error) {
-            console.error("Failed to update hotel", error)
+            console.error("Failed to update room type", error)
             toast.error("An unexpected error occurred", {
                 description: "Please try again later"
             })
@@ -93,9 +92,9 @@ export function EditHotelDialog({ hotel, open: controlledOpen, onOpenChange }: E
         <Dialog open={open} onOpenChange={setOpen}>
             <DialogContent className="sm:max-w-[425px]">
                 <DialogHeader>
-                    <DialogTitle>Edit Hotel</DialogTitle>
+                    <DialogTitle>Edit Room Type</DialogTitle>
                     <DialogDescription>
-                        Edit hotel details. Click save when you&apos;re done.
+                        Edit room type details. Click save when you&apos;re done.
                     </DialogDescription>
                 </DialogHeader>
                 <Form {...form}>
@@ -107,7 +106,7 @@ export function EditHotelDialog({ hotel, open: controlledOpen, onOpenChange }: E
                                 <FormItem>
                                     <FormLabel>Name</FormLabel>
                                     <FormControl>
-                                        <Input placeholder="Hotel Name" {...field} />
+                                        <Input placeholder="Ocean View Suite" {...field} />
                                     </FormControl>
                                     <FormMessage />
                                 </FormItem>
@@ -115,30 +114,48 @@ export function EditHotelDialog({ hotel, open: controlledOpen, onOpenChange }: E
                         />
                         <FormField
                             control={form.control}
-                            name="location"
+                            name="description"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>Location</FormLabel>
+                                    <FormLabel>Description</FormLabel>
                                     <FormControl>
-                                        <Input placeholder="City, Country" {...field} />
+                                        <Textarea
+                                            placeholder="Describe the room..."
+                                            {...field}
+                                        />
                                     </FormControl>
                                     <FormMessage />
                                 </FormItem>
                             )}
                         />
-                        <FormField
-                            control={form.control}
-                            name="imageUrl"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Image URL</FormLabel>
-                                    <FormControl>
-                                        <Input placeholder="https://..." disabled={isLoading} {...field} />
-                                    </FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
+                        <div className="grid grid-cols-2 gap-4">
+                            <FormField
+                                control={form.control}
+                                name="basePrice"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Base Price</FormLabel>
+                                        <FormControl>
+                                            <Input type="number" disabled={isLoading} {...field} />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                            <FormField
+                                control={form.control}
+                                name="capacity"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Capacity</FormLabel>
+                                        <FormControl>
+                                            <Input type="number" disabled={isLoading} {...field} />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                        </div>
                         <DialogFooter>
                             <Button type="submit" isLoading={isLoading}>
                                 Save changes

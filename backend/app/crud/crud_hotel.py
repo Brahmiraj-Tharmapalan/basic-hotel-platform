@@ -3,7 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 from app.models.hotel import Hotel, RoomType
-from app.schemas.hotel import HotelCreate, HotelUpdate, RoomTypeCreate
+from app.schemas.hotel import HotelCreate, HotelUpdate, RoomTypeCreate, RoomTypeUpdate
 
 async def get_hotel(db: AsyncSession, hotel_id: int) -> Optional[Hotel]:
     result = await db.execute(select(Hotel).filter(Hotel.id == hotel_id))
@@ -72,3 +72,34 @@ async def get_room_types(db: AsyncSession, hotel_id: int) -> List[RoomType]:
         .options(selectinload(RoomType.rate_adjustments))
     )
     return result.scalars().all()
+
+async def get_room_type(db: AsyncSession, room_id: int) -> Optional[RoomType]:
+    result = await db.execute(
+        select(RoomType)
+        .where(RoomType.id == room_id)
+        .options(selectinload(RoomType.rate_adjustments))
+    )
+    return result.scalars().first()
+
+async def update_room_type(db: AsyncSession, room_id: int, room_type: RoomTypeUpdate) -> Optional[RoomType]:
+    db_room_type = await get_room_type(db, room_id)
+    if not db_room_type:
+        return None
+    
+    update_data = room_type.model_dump(exclude_unset=True)
+    for key, value in update_data.items():
+        setattr(db_room_type, key, value)
+    
+    db.add(db_room_type)
+    await db.commit()
+    await db.refresh(db_room_type)
+    return db_room_type
+
+async def delete_room_type(db: AsyncSession, room_id: int) -> bool:
+    db_room_type = await get_room_type(db, room_id)
+    if not db_room_type:
+        return False
+    
+    await db.delete(db_room_type)
+    await db.commit()
+    return True

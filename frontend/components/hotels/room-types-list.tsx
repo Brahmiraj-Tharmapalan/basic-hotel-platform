@@ -29,7 +29,11 @@ export function RoomTypesList({ roomTypes, hotelId }: RoomTypesListProps) {
                     </div>
                 ) : (
                     roomTypes.map((roomType) => (
-                        <RoomTypeCard key={roomType.id} roomType={roomType} />
+                        <RoomTypeCard
+                            key={roomType.id}
+                            roomType={roomType}
+                            hotelId={hotelId}
+                        />
                     ))
                 )}
             </TabsContent>
@@ -40,7 +44,11 @@ export function RoomTypesList({ roomTypes, hotelId }: RoomTypesListProps) {
                     </div>
                 ) : (
                     roomTypes.map((roomType) => (
-                        <RoomTypeCard key={roomType.id} roomType={roomType} />
+                        <RoomTypeCard
+                            key={roomType.id}
+                            roomType={roomType}
+                            hotelId={hotelId}
+                        />
                     ))
                 )}
             </TabsContent>
