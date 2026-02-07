@@ -18,7 +18,7 @@ async def read_hotels(
     hotels = await crud_hotel.get_hotels(db, skip=skip, limit=limit)
     return hotels
 
-@router.post("/", response_model=schemas.Hotel)
+@router.post("/", response_model=schemas.Hotel, response_model_by_alias=True)
 async def create_hotel(
     hotel: schemas.HotelCreate,
     current_user: CurrentUser,
@@ -27,7 +27,7 @@ async def create_hotel(
     """Protected endpoint - requires authentication"""
     return await crud_hotel.create_hotel(db=db, hotel=hotel)
 
-@router.get("/{hotel_id}", response_model=schemas.Hotel)
+@router.get("/{hotel_id}", response_model=schemas.Hotel, response_model_by_alias=True)
 async def read_hotel(
     hotel_id: int,
     db: AsyncSession = Depends(deps.get_db),
@@ -38,7 +38,7 @@ async def read_hotel(
         raise HTTPException(status_code=404, detail="Hotel not found")
     return db_hotel
 
-@router.put("/{hotel_id}", response_model=schemas.Hotel)
+@router.put("/{hotel_id}", response_model=schemas.Hotel, response_model_by_alias=True)
 async def update_hotel(
     hotel_id: int,
     hotel: schemas.HotelUpdate,
@@ -51,7 +51,7 @@ async def update_hotel(
         raise HTTPException(status_code=404, detail="Hotel not found")
     return db_hotel
 
-@router.delete("/{hotel_id}", response_model=schemas.Hotel)
+@router.delete("/{hotel_id}", response_model=schemas.Hotel, response_model_by_alias=True)
 async def delete_hotel(
     hotel_id: int,
     current_user: CurrentUser,
@@ -64,7 +64,7 @@ async def delete_hotel(
     await crud_hotel.delete_hotel(db, hotel_id=hotel_id)
     return db_hotel
 
-@router.post("/{hotel_id}/rooms", response_model=schemas.RoomType)
+@router.post("/{hotel_id}/rooms", response_model=schemas.RoomType, response_model_by_alias=True)
 async def create_room_type(
     hotel_id: int,
     room_type: schemas.RoomTypeCreate,
