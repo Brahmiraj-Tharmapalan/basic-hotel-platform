@@ -31,7 +31,7 @@ async def update_hotel(db: AsyncSession, hotel_id: int, hotel: HotelUpdate) -> O
     if not db_hotel:
         return None
     
-    update_data = hotel.dict(exclude_unset=True)
+    update_data = hotel.model_dump(exclude_unset=True)
     for key, value in update_data.items():
         setattr(db_hotel, key, value)
 

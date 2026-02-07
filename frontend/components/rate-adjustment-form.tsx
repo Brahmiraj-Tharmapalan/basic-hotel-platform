@@ -179,7 +179,7 @@ export function RateAdjustmentForm({ hotels }: RateAdjustmentFormProps) {
                                         <SelectContent>
                                             {roomTypes.map((type) => (
                                                 <SelectItem key={type.id} value={type.id!.toString()}>
-                                                    {type.name} - ${type.price}
+                                                    {type.name} - ${type.basePrice}
                                                 </SelectItem>
                                             ))}
                                         </SelectContent>
@@ -195,9 +195,9 @@ export function RateAdjustmentForm({ hotels }: RateAdjustmentFormProps) {
                                 <div className="grid grid-cols-2 gap-2 text-sm">
                                     <div>
                                         <span className="text-muted-foreground">Base Price:</span>
-                                        <span className="ml-2 font-semibold">${Number(selectedRoomType.price || 0).toFixed(2)}</span>
+                                        <span className="ml-2 font-semibold">${Number(selectedRoomType.basePrice || 0).toFixed(2)}</span>
                                     </div>
-                                    {selectedRoomType.effectivePrice && selectedRoomType.effectivePrice !== selectedRoomType.price && (
+                                    {selectedRoomType.effectivePrice && selectedRoomType.effectivePrice !== selectedRoomType.basePrice && (
                                         <div>
                                             <span className="text-muted-foreground">Current Effective:</span>
                                             <span className="ml-2 font-semibold">${Number(selectedRoomType.effectivePrice || 0).toFixed(2)}</span>
@@ -208,7 +208,7 @@ export function RateAdjustmentForm({ hotels }: RateAdjustmentFormProps) {
                                     <div className="pt-2 border-t">
                                         <span className="text-sm text-muted-foreground">New Effective Price:</span>
                                         <span className="ml-2 text-lg font-bold text-primary">
-                                            ${(Number(selectedRoomType.price || 0) + Number(adjustmentAmount || 0)).toFixed(2)}
+                                            ${(Number(selectedRoomType.basePrice || 0) + Number(adjustmentAmount || 0)).toFixed(2)}
                                         </span>
                                     </div>
                                 )}

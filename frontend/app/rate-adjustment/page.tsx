@@ -33,7 +33,7 @@ export default async function RateAdjustmentPage() {
                     return {
                         hotelName: hotel.name,
                         roomTypeName: roomType.name,
-                        basePrice: roomType.price
+                        basePrice: roomType.basePrice
                     }
                 }
             }
